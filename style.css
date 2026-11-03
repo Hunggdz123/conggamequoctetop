@@ -156,6 +156,47 @@
     box-shadow 0.3s ease;
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
 }
+.flag-globe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 50%;
+  background: #07111f;
+  box-shadow:
+    inset -8px -6px 13px rgba(0, 0, 0, 0.72),
+    inset 3px 3px 8px rgba(255, 255, 255, 0.32),
+    0 0 8px rgba(34, 211, 238, 0.24);
+}
+.flag-globe-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.flag-globe::before,
+.flag-globe::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+.flag-globe::before {
+  background:
+    radial-gradient(ellipse at 30% 22%, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.12) 18%, transparent 39%),
+    radial-gradient(ellipse at 50% 50%, transparent 38%, rgba(0, 0, 0, 0.12) 62%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 36%, rgba(0, 0, 0, 0.42));
+}
+.flag-globe::after {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow:
+    inset 0 0 7px rgba(255, 255, 255, 0.24),
+    inset -3px -3px 8px rgba(0, 0, 0, 0.28);
+}
 .coverflow-card.active-node {
   cursor: default;
 }

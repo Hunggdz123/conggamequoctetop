@@ -289,6 +289,109 @@ setInterval(function () {
     el.textContent = Math.max(5, base + offset).toFixed(1) + "%";
   });
 }, 3500); /* 5. Khởi tạo Interactive Cyber Canvas (Các line màu sắc nét tỏa ra di chuyển theo chuột) */
+(function initFlagGlobes() {
+  var canvases = Array.from(document.querySelectorAll(".flag-globe-canvas"));
+  if (canvases.length === 0) return;
+
+  var size = 160;
+  var textureWidth = 512;
+  var textureHeight = 256;
+  var reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  var globes = [];
+
+  canvases.forEach(function (canvas) {
+    var ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("Unable to initialize flag globe canvas.");
+      return;
+    }
+
+    var image = new Image();
+    image.onload = function () {
+      var textureCanvas = document.createElement("canvas");
+      textureCanvas.width = textureWidth;
+      textureCanvas.height = textureHeight;
+      var textureCtx = textureCanvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+      if (!textureCtx) {
+        console.error("Unable to prepare flag globe texture.");
+        return;
+      }
+
+      textureCtx.drawImage(image, 0, 0, textureWidth, textureHeight);
+      var texture = textureCtx.getImageData(
+        0,
+        0,
+        textureWidth,
+        textureHeight,
+      ).data;
+      var pixels = ctx.createImageData(size, size);
+      var mappings = [];
+
+      for (var y = 0; y < size; y++) {
+        var ny = (2 * (y + 0.5)) / size - 1;
+        for (var x = 0; x < size; x++) {
+          var nx = (2 * (x + 0.5)) / size - 1;
+          var radiusSquared = nx * nx + ny * ny;
+          if (radiusSquared > 1) continue;
+
+          var z = Math.sqrt(1 - radiusSquared);
+          var longitude = Math.atan2(nx, z) / (2 * Math.PI) + 0.25;
+          var latitude = Math.asin(ny) / Math.PI + 0.5;
+          var sourceY = Math.min(
+            textureHeight - 1,
+            Math.floor(latitude * textureHeight),
+          );
+          var pixel = (y * size + x) * 4;
+          mappings.push({
+            pixel: pixel,
+            sourceX: ((longitude % 1) + 1) % 1 * textureWidth,
+            sourceY: sourceY,
+          });
+        }
+      }
+
+      globes.push({
+        canvas: canvas,
+        ctx: ctx,
+        pixels: pixels,
+        mappings: mappings,
+        texture: texture,
+      });
+    };
+    image.onerror = function () {
+      console.error("Unable to load flag globe texture:", image.src);
+    };
+    image.src = canvas.getAttribute("data-flag-src");
+  });
+
+  var lastFrame = 0;
+  function drawGlobes(timestamp) {
+    requestAnimationFrame(drawGlobes);
+    if (timestamp - lastFrame < 33) return;
+    lastFrame = timestamp;
+
+    var rotation = (timestamp / (reducedMotion ? 30000 : 15000)) % 1;
+    globes.forEach(function (globe) {
+      var output = globe.pixels.data;
+      globe.mappings.forEach(function (mapping) {
+        var sourceX = Math.floor(
+          (mapping.sourceX + rotation * textureWidth) % textureWidth,
+        );
+        var source = (mapping.sourceY * textureWidth + sourceX) * 4;
+        output[mapping.pixel] = globe.texture[source];
+        output[mapping.pixel + 1] = globe.texture[source + 1];
+        output[mapping.pixel + 2] = globe.texture[source + 2];
+        output[mapping.pixel + 3] = 255;
+      });
+      globe.ctx.putImageData(globe.pixels, 0, 0);
+    });
+  }
+  requestAnimationFrame(drawGlobes);
+})(); /* 5. Khởi tạo Interactive Cyber Canvas (Các line màu sắc nét tỏa ra di chuyển theo chuột) */
 (function initCyberCanvas() {
   var canvas = document.getElementById("cyber-canvas");
   if (!canvas) return;
